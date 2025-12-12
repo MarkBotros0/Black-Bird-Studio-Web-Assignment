@@ -15,15 +15,10 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   poweredByHeader: false,
   
-  // TypeScript and ESLint configuration
+  // TypeScript configuration
   typescript: {
     // Fail build on TypeScript errors in production
     ignoreBuildErrors: false,
-  },
-  
-  eslint: {
-    // Fail build on ESLint errors in production
-    ignoreDuringBuilds: false,
   },
 };
 
