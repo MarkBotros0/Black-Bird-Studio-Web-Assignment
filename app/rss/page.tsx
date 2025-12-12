@@ -33,7 +33,7 @@ export default function RssPage() {
 
   return (
     <div className={styles.layout.container}>
-      <div className={cn(styles.layout.content, feed && 'pb-24')}>
+      <div className={cn(styles.layout.content, feed ? 'pb-24' : undefined)}>
         <PageHeader />
 
         <RssUrlInput
