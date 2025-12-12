@@ -5,6 +5,12 @@ import { generateRssXml, downloadXmlFile } from '../utils/generateRssXml';
 import type { RssFeed, RssError, RssItem, ParsedRssData } from '../types/rss';
 import { RSS_API_ROUTE, REQUEST_TIMEOUT_MS } from '../constants';
 import { generateXmlFilename } from '../utils/filenameUtils';
+import {
+  createValidationError,
+  createFetchError,
+  createGenerationError,
+  createNetworkError,
+} from '../utils/errorUtils';
 
 /**
  * Return type for useRssFeed hook
@@ -42,16 +48,122 @@ export function useRssFeed(): UseRssFeedReturn {
   const [error, setError] = useState<RssError | null>(null);
 
   /**
-   * Internal function to fetch RSS feed from a URL
+   * Validates and trims the feed URL
+   *
+   * @param feedUrl - URL to validate
+   * @returns Trimmed URL or sets error and returns empty string
    */
-  const fetchFeed = useCallback(async (feedUrl: string) => {
+  const validateFeedUrl = useCallback((feedUrl: string): string => {
     const trimmedUrl = feedUrl.trim();
 
     if (!trimmedUrl) {
-      setError({
-        message: 'Please enter an RSS feed URL.',
-        type: 'VALIDATION_ERROR',
+      setError(createValidationError('Please enter an RSS feed URL.'));
+      return '';
+    }
+
+    return trimmedUrl;
+  }, []);
+
+  /**
+   * Creates a timeout controller for fetch requests
+   *
+   * @returns Object containing abort controller and timeout ID
+   */
+  const createFetchTimeout = useCallback((): {
+    controller: AbortController;
+    timeoutId: NodeJS.Timeout;
+  } => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    return { controller, timeoutId };
+  }, []);
+
+  /**
+   * Checks if an error is a timeout error
+   *
+   * @param error - Error from fetch operation
+   * @returns True if error is a timeout, false otherwise
+   */
+  const isTimeoutError = useCallback((error: unknown): boolean => {
+    return error instanceof Error && error.name === 'AbortError';
+  }, []);
+
+  /**
+   * Performs the actual fetch request to the RSS API
+   *
+   * @param url - URL to fetch
+   * @returns Response object or throws error
+   */
+  const performFetch = useCallback(async (url: string): Promise<Response> => {
+    const { controller, timeoutId } = createFetchTimeout();
+
+    try {
+      const response = await fetch(RSS_API_ROUTE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (isTimeoutError(fetchError)) {
+        throw createFetchError('Request timeout. Please try again.');
+      }
+      throw fetchError;
+    }
+  }, [createFetchTimeout, isTimeoutError]);
+
+  /**
+   * Extracts error data from a failed response
+   *
+   * @param response - Failed response object
+   * @returns Error object or undefined
+   */
+  const extractResponseError = useCallback(async (response: Response): Promise<RssError> => {
+    let errorData: RssError | undefined;
+    try {
+      const errorResult = await response.json();
+      errorData = errorResult.error;
+    } catch {
+      // JSON parsing failed, use default error
+    }
+
+    return (
+      errorData || createFetchError(
+        `Failed to fetch RSS feed: ${response.status} ${response.statusText}`
+      )
+    );
+  }, []);
+
+  /**
+   * Handles successful API response
+   *
+   * @param result - Parsed response data
+   */
+  const handleSuccessfulResponse = useCallback((result: {
+    data?: ParsedRssData;
+    error?: RssError;
+  }): void => {
+    if (result.error) {
+      setError(result.error);
+    } else if (result.data) {
+      setFeed(result.data.feed);
+      setError(null);
+    } else {
+      setError(createFetchError('Invalid response from server.'));
+    }
+  }, []);
+
+  /**
+   * Internal function to fetch RSS feed from a URL
+   */
+  const fetchFeed = useCallback(async (feedUrl: string) => {
+    const trimmedUrl = validateFeedUrl(feedUrl);
+    if (!trimmedUrl) {
       return;
     }
 
@@ -61,69 +173,27 @@ export function useRssFeed(): UseRssFeedReturn {
     setUrl(trimmedUrl);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-      let response: Response;
-      try {
-        response = await fetch(RSS_API_ROUTE, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: trimmedUrl }),
-          signal: controller.signal,
-        });
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          throw new Error('Request timeout. Please try again.');
-        }
-        throw fetchError;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      const response = await performFetch(trimmedUrl);
 
       if (!response.ok) {
-        let errorData: RssError | undefined;
-        try {
-          const errorResult = await response.json();
-          errorData = errorResult.error;
-        } catch {
-          // JSON parsing failed, use default error
-        }
-
-        setError(
-          errorData || {
-            message: `Failed to fetch RSS feed: ${response.status} ${response.statusText}`,
-            type: 'FETCH_ERROR',
-          }
-        );
+        const errorData = await extractResponseError(response);
+        setError(errorData);
         return;
       }
 
       const result: { data?: ParsedRssData; error?: RssError } = await response.json();
-
-      if (result.error) {
-        setError(result.error);
-      } else if (result.data) {
-        setFeed(result.data.feed);
-        setError(null);
-      } else {
-        setError({
-          message: 'Invalid response from server.',
-          type: 'FETCH_ERROR',
-        });
-      }
+      handleSuccessfulResponse(result);
     } catch (err) {
-      setError({
-        message: err instanceof Error ? err.message : 'An unexpected error occurred',
-        type: 'FETCH_ERROR',
-      });
+      // Check if error is already an RssError (from timeout handler)
+      if (err && typeof err === 'object' && 'type' in err && 'message' in err) {
+        setError(err as RssError);
+      } else {
+        setError(createNetworkError(err, 'An unexpected error occurred'));
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [validateFeedUrl, performFetch, extractResponseError, handleSuccessfulResponse]);
 
   const handleFetch = useCallback(async () => {
     await fetchFeed(url);
@@ -153,10 +223,11 @@ export function useRssFeed(): UseRssFeedReturn {
       const filename = generateXmlFilename(feedTitle);
       downloadXmlFile(xmlContent, filename);
     } catch (error) {
-      setError({
-        message: error instanceof Error ? error.message : 'Failed to generate XML file',
-        type: 'GENERATION_ERROR',
-      });
+      setError(
+        createGenerationError(
+          error instanceof Error ? error.message : 'Failed to generate XML file'
+        )
+      );
     }
   }, [feed]);
 

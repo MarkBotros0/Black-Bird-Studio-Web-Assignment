@@ -93,24 +93,17 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
     });
   }, [fields]);
 
-  const handleMouseDown = useCallback(
-    (field: string, e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (!field) return;
-
-      setIsResizing(field);
-      startXRef.current = e.clientX;
-      const currentWidth = columnWidthsRef.current[field] || getInitialWidth(field);
-      startWidthRef.current = currentWidth;
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
+  /**
+   * Creates a mouse move handler for column resizing
+   *
+   * @param field - Field name being resized
+   * @returns Mouse move event handler
+   */
+  const createMouseMoveHandler = useCallback(
+    (field: string) => {
+      return (moveEvent: MouseEvent) => {
         const diff = moveEvent.clientX - startXRef.current;
-        const newWidth = Math.max(
-          MIN_COLUMN_WIDTH,
-          startWidthRef.current + diff
-        );
+        const newWidth = Math.max(MIN_COLUMN_WIDTH, startWidthRef.current + diff);
 
         setColumnWidths((prev) => {
           if (prev[field] === newWidth) {
@@ -122,17 +115,68 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
           };
         });
       };
+    },
+    []
+  );
 
-      const handleMouseUp = () => {
+  /**
+   * Creates a mouse up handler to stop column resizing
+   *
+   * @param handleMouseMove - Mouse move handler to remove
+   * @returns Mouse up event handler
+   */
+  const createMouseUpHandler = useCallback(
+    (handleMouseMove: (e: MouseEvent) => void) => {
+      const handler = () => {
         setIsResizing(null);
         document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mouseup', handler);
       };
+      return handler;
+    },
+    []
+  );
 
+  /**
+   * Initializes column resize operation
+   *
+   * @param field - Field name to resize
+   * @param startX - Initial mouse X position
+   */
+  const initializeResize = useCallback((field: string, startX: number) => {
+    setIsResizing(field);
+    startXRef.current = startX;
+    const currentWidth = columnWidthsRef.current[field] || getInitialWidth(field);
+    startWidthRef.current = currentWidth;
+  }, []);
+
+  /**
+   * Attaches resize event listeners
+   *
+   * @param handleMouseMove - Mouse move handler
+   * @param handleMouseUp - Mouse up handler
+   */
+  const attachResizeListeners = useCallback(
+    (handleMouseMove: (e: MouseEvent) => void, handleMouseUp: () => void) => {
       document.addEventListener('mousemove', handleMouseMove, { passive: true });
       document.addEventListener('mouseup', handleMouseUp, { once: true });
     },
     []
+  );
+
+  const handleMouseDown = useCallback(
+    (field: string, e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!field) return;
+
+      initializeResize(field, e.clientX);
+      const handleMouseMove = createMouseMoveHandler(field);
+      const handleMouseUp = createMouseUpHandler(handleMouseMove);
+      attachResizeListeners(handleMouseMove, handleMouseUp);
+    },
+    [initializeResize, createMouseMoveHandler, createMouseUpHandler, attachResizeListeners]
   );
 
   const getColumnWidth = useCallback(

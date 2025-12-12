@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Card from './ui/Card';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { styles } from '../styles';
+import { useDebouncedCallback } from '../hooks/useDebounce';
+import { URL_INPUT_DEBOUNCE_MS } from '../constants';
 
 /**
  * Props for RssUrlInput component
@@ -22,7 +24,7 @@ interface RssUrlInputProps {
 
 /**
  * Input component for entering RSS feed URL
- * Supports Enter key to trigger fetch
+ * Supports Enter key to trigger fetch and debounced URL updates
  *
  * @param props - Component props
  * @returns Rendered URL input component
@@ -33,17 +35,47 @@ export default function RssUrlInput({
   onUrlChange,
   onFetch,
 }: RssUrlInputProps) {
+  // Local state for immediate input updates (keeps input responsive)
+  const [localUrl, setLocalUrl] = useState(url);
+
+  // Sync local state when prop changes (e.g., when cleared externally)
+  useEffect(() => {
+    setLocalUrl(url);
+  }, [url]);
+
+  // Debounced callback to update parent state after user stops typing
+  const debouncedOnUrlChange = useDebouncedCallback(
+    (newUrl: string) => {
+      onUrlChange(newUrl);
+    },
+    URL_INPUT_DEBOUNCE_MS
+  );
+
+  /**
+   * Handles input change with immediate local update and debounced parent update
+   */
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newUrl = e.target.value;
+      setLocalUrl(newUrl); // Update immediately for responsive UI
+      debouncedOnUrlChange(newUrl); // Debounce parent update
+    },
+    [debouncedOnUrlChange]
+  );
+
   /**
    * Handles Enter key press to trigger fetch
    */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter' && !loading && url.trim()) {
+      if (e.key === 'Enter' && !loading && localUrl.trim()) {
         e.preventDefault();
+        // Ensure parent state is updated before fetching
+        onUrlChange(localUrl);
         onFetch();
       }
     },
-    [loading, url, onFetch]
+    [loading, localUrl, onUrlChange, onFetch]
   );
 
   return (
@@ -51,8 +83,8 @@ export default function RssUrlInput({
       <div className={styles.layout.flex.row}>
         <Input
           type="url"
-          value={url}
-          onChange={(e) => onUrlChange(e.target.value)}
+          value={localUrl}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Enter RSS feed URL (e.g., https://example.com/feed.xml)"
           className="flex-1"
@@ -67,7 +99,7 @@ export default function RssUrlInput({
           variant="primary"
           size="large"
           onClick={onFetch}
-          disabled={loading || !url.trim()}
+          disabled={loading || !localUrl.trim()}
           loading={loading}
           aria-label={loading ? 'Fetching RSS feed' : 'Fetch RSS feed'}
         >

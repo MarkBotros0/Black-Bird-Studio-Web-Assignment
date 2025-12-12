@@ -1,19 +1,7 @@
 import { DOMParser } from '@xmldom/xmldom';
 import type { RssFeed, RssError } from '../types/rss';
 import { parseRssXmlCommon } from './parseRssCommon';
-
-/**
- * Creates a parse error response from an exception
- */
-function createParseErrorFromException(error: unknown): { feed: RssFeed; error: RssError } {
-  return {
-    feed: { channelFields: {}, items: [], feedType: 'rss' },
-    error: {
-      message: error instanceof Error ? error.message : 'Failed to parse RSS XML',
-      type: 'PARSE_ERROR',
-    },
-  };
-}
+import { createParseErrorFromException } from './errorUtils';
 
 /**
  * Server-side RSS XML parser (uses @xmldom/xmldom instead of browser DOMParser)

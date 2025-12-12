@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { RssItem } from '../../types/rss';
 import FieldDisplay from './FieldDisplay';
 import FieldEditor from './FieldEditor';
@@ -35,11 +36,12 @@ interface RssTableRowProps {
 
 /**
  * Table row component for displaying and editing RSS items
+ * Memoized to prevent unnecessary re-renders when props haven't changed
  *
  * @param props - Component props
  * @returns Rendered table row component
  */
-export default function RssTableRow({
+function RssTableRow({
   item,
   editedItem,
   fields,
@@ -86,4 +88,9 @@ export default function RssTableRow({
     </tr>
   );
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+// Note: Callbacks are compared by reference, so they should be memoized
+// with useCallback in the parent component for optimal performance
+export default memo(RssTableRow);
 

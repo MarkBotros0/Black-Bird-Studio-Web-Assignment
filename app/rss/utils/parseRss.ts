@@ -1,5 +1,6 @@
 import type { RssFeed, RssError } from '../types/rss';
 import { parseRssXmlCommon } from './parseRssCommon';
+import { createParseErrorFromException } from './errorUtils';
 
 /**
  * Validates if a string is a valid HTTP/HTTPS URL
@@ -18,23 +19,6 @@ export function isValidUrl(urlString: string): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * Parses RSS XML string into structured JSON data (supports RSS 2.0 and Atom)
- * Client-side parser using browser DOMParser
- */
-/**
- * Creates a parse error response from an exception
- */
-function createParseErrorFromException(error: unknown): { feed: RssFeed; error: RssError } {
-  return {
-    feed: { channelFields: {}, items: [], feedType: 'rss' },
-    error: {
-      message: error instanceof Error ? error.message : 'Failed to parse RSS XML',
-      type: 'PARSE_ERROR',
-    },
-  };
 }
 
 /**

@@ -1,6 +1,10 @@
 import type { RssItem, RssFeed, RssError } from '../types/rss';
 import { XML_TAGS } from '../constants';
 import { extractElementFields } from './xmlExtraction';
+import {
+  createParseErrorResult,
+  createValidationErrorResult,
+} from './errorUtils';
 
 /**
  * Common interface for XML document access (works with both browser DOM and xmldom)
@@ -88,42 +92,6 @@ function getElementByTagName(
   return null;
 }
 
-/**
- * Creates a default empty feed structure
- */
-function createEmptyFeed(feedType: 'rss' | 'atom' = 'rss'): RssFeed {
-  return { channelFields: {}, items: [], feedType };
-}
-
-/**
- * Creates an error result for parse errors
- */
-function createParseError(message: string): { feed: RssFeed; error: RssError } {
-  return {
-    feed: createEmptyFeed(),
-    error: {
-      message,
-      type: 'PARSE_ERROR',
-    },
-  };
-}
-
-/**
- * Creates an error result for validation errors
- */
-function createValidationError(
-  message: string,
-  feedType: 'rss' | 'atom' = 'rss',
-  channelFields: Record<string, string> = {}
-): { feed: RssFeed; error: RssError } {
-  return {
-    feed: { channelFields, items: [], feedType },
-    error: {
-      message,
-      type: 'VALIDATION_ERROR',
-    },
-  };
-}
 
 /**
  * Parses RSS 2.0 feed format
@@ -142,7 +110,7 @@ function parseRssFeed(xmlDoc: XmlDocument): { feed: RssFeed; error?: RssError } 
   const items: RssItem[] = itemElements.map((item) => extractElementFields(item));
 
   if (items.length === 0) {
-    return createValidationError('RSS feed contains no items.', 'rss', channelFields);
+    return createValidationErrorResult('RSS feed contains no items.', 'rss', channelFields);
   }
 
   return {
@@ -171,7 +139,7 @@ function parseAtomFeed(xmlDoc: XmlDocument): { feed: RssFeed; error?: RssError }
   const items: RssItem[] = entryElements.map((entry) => extractElementFields(entry));
 
   if (items.length === 0) {
-    return createValidationError('Atom feed contains no entries.', 'atom', channelFields);
+    return createValidationErrorResult('Atom feed contains no entries.', 'atom', channelFields);
   }
 
   return {
@@ -194,7 +162,7 @@ export function parseRssXmlCommon(
   xmlDoc: XmlDocument
 ): { feed: RssFeed; error?: RssError } {
   if (hasParseError(xmlDoc)) {
-    return createParseError('Invalid XML format. Please check the RSS feed structure.');
+    return createParseErrorResult('Invalid XML format. Please check the RSS feed structure.');
   }
 
   // Try parsing as RSS 2.0 first
@@ -210,7 +178,7 @@ export function parseRssXmlCommon(
   }
 
   // Neither format recognized
-  return createValidationError(
+  return createValidationErrorResult(
     'Feed format not recognized. Expected RSS 2.0 or Atom format.'
   );
 }

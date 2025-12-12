@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import {
   parseFieldValue,
   isImageField,
@@ -28,11 +28,12 @@ interface FieldDisplayProps {
 /**
  * Component for displaying field values in table cells
  * Handles different field types (images, dates, long text, etc.)
+ * Memoized to prevent unnecessary re-renders when props haven't changed
  *
  * @param props - Component props
  * @returns Rendered field display component
  */
-export default function FieldDisplay({ field, value }: FieldDisplayProps) {
+function FieldDisplay({ field, value }: FieldDisplayProps) {
   const { displayValue, isImage, isDate, isLongText, isLink, linkUrl } = useMemo(() => {
     const parsedValue = parseFieldValue(value, field);
     const imageField = isImageField(field, value);
@@ -75,4 +76,7 @@ export default function FieldDisplay({ field, value }: FieldDisplayProps) {
 
   return <DefaultField value={displayValue} />;
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+export default memo(FieldDisplay);
 

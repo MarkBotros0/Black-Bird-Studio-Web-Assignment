@@ -44,6 +44,9 @@ export const MAX_FILENAME_LENGTH = 100;
 /** Delay in milliseconds before revoking object URL after file download */
 export const URL_REVOKE_DELAY_MS = 100;
 
+/** Debounce delay in milliseconds for URL input validation */
+export const URL_INPUT_DEBOUNCE_MS = 500;
+
 /** XML namespaces */
 export const XML_NAMESPACES = {
   ATOM: 'http://www.w3.org/2005/Atom',
