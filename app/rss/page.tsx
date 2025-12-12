@@ -10,7 +10,8 @@ import PageHeader from './components/PageHeader';
 import Button from './components/ui/Button';
 import Card from './components/ui/Card';
 import { useRssFeed } from './hooks/useRssFeed';
-import { styles } from './styles';
+import { styles, cn } from './styles';
+import { UI_CLASSES } from './constants';
 
 /**
  * Main RSS Feed Parser & Editor page component
@@ -32,7 +33,7 @@ export default function RssPage() {
 
   return (
     <div className={styles.layout.container}>
-      <div className={`${styles.layout.content} ${feed ? 'pb-24' : ''}`}>
+      <div className={cn(styles.layout.content, feed && 'pb-24')}>
         <PageHeader />
 
         <RssUrlInput
@@ -60,13 +61,13 @@ export default function RssPage() {
 
       {/* Fixed download button at bottom center */}
       {feed && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div className={UI_CLASSES.FIXED_BOTTOM_CENTER}>
           <Button
             variant="success"
             size="large"
             onClick={handleGenerateXml}
             aria-label="Download Updated RSS XML file"
-            className="shadow-lg"
+            className={UI_CLASSES.BUTTON_SHADOW}
           >
             Download Updated RSS XML
           </Button>

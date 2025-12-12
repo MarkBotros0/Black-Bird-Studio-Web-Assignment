@@ -22,18 +22,15 @@ interface FeedInfoProps {
  * @returns Rendered feed info component
  */
 export default function FeedInfo({ feed }: FeedInfoProps) {
-  // Extract title, handling both plain text and JSON
   const titleValue = feed.channelFields.title || feed.channelFields.name;
   const title = titleValue ? extractTextContent(titleValue) : 'RSS Feed';
 
-  // Extract description
   const descriptionValue =
     feed.channelFields.description || feed.channelFields.subtitle;
   const description = descriptionValue
     ? extractTextContent(descriptionValue)
     : undefined;
 
-  // Extract link, prioritizing href attribute from JSON
   const linkValue = feed.channelFields.link || feed.channelFields.id;
   const link = linkValue ? extractLinkUrl(linkValue) : undefined;
 

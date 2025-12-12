@@ -30,7 +30,6 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editedItems, setEditedItems] = useState<RssItem[]>(items);
 
-  // Sync editedItems when items prop changes (but not when editing)
   useEffect(() => {
     if (editingIndex === null) {
       setEditedItems([...items]);
@@ -38,10 +37,7 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, editingIndex]);
 
-  // Get all unique fields from items
   const allFields = useMemo(() => getAllFields(items), [items]);
-
-  // Column resizing functionality
   const { isResizing, handleMouseDown, getColumnWidth } = useColumnResize(allFields);
 
   /**
@@ -87,7 +83,6 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
 
         const currentValue = currentItem[field];
 
-        // If the original value had attributes, preserve them
         if (hasAttributes(currentValue)) {
           const parsed = parseFieldValue(currentValue);
           updated[index] = {

@@ -79,7 +79,6 @@ function getInitialWidth(field: string): number {
  * @returns Object containing resize state and handlers
  */
 export function useColumnResize(fields: string[]): UseColumnResizeReturn {
-  // Initialize with default widths based on field types
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() => {
     const initial: ColumnWidths = {};
     fields.forEach((field) => {
@@ -87,33 +86,29 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
     });
     return initial;
   });
-  
-  // Use ref to track current widths for event handlers
+
   const columnWidthsRef = useRef<ColumnWidths>(columnWidths);
-  
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const startXRef = useRef<number>(0);
   const startWidthRef = useRef<number>(0);
 
-  // Sync ref with state
   useEffect(() => {
     columnWidthsRef.current = columnWidths;
   }, [columnWidths]);
 
-  // Update widths when fields change
   useEffect(() => {
     if (!fields || fields.length === 0) return;
-    
+
     setColumnWidths((prev) => {
       let hasChanges = false;
       const updated = { ...prev };
-      
+
       for (const field of fields) {
         if (!field || updated[field]) continue;
         updated[field] = getInitialWidth(field);
         hasChanges = true;
       }
-      
+
       return hasChanges ? updated : prev;
     });
   }, [fields]);
@@ -122,9 +117,9 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
     (field: string, e: React.MouseEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (!field) return;
-      
+
       setIsResizing(field);
       startXRef.current = e.clientX;
       const currentWidth = columnWidthsRef.current[field] || getInitialWidth(field);
@@ -136,9 +131,8 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
           MIN_COLUMN_WIDTH,
           startWidthRef.current + diff
         );
-        
+
         setColumnWidths((prev) => {
-          // Only update if width actually changed to avoid unnecessary re-renders
           if (prev[field] === newWidth) {
             return prev;
           }

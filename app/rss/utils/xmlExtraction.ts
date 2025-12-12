@@ -48,16 +48,11 @@ function extractAttributes(element: Element): Record<string, string> {
  */
 export function extractElementFields(element: Element): Record<string, string> {
   const fields: Record<string, string> = {};
-  
-  // Get all direct child elements
-  // Browser DOM has .children, xmldom uses .childNodes
   let children: Element[];
   
   if ('children' in element && element.children) {
-    // Browser DOM
     children = Array.from(element.children) as Element[];
   } else if ('childNodes' in element && element.childNodes) {
-    // xmldom (server-side)
     children = Array.from(element.childNodes).filter(
       (node) => (node as Node).nodeType === 1 // ELEMENT_NODE
     ) as Element[];
@@ -68,16 +63,12 @@ export function extractElementFields(element: Element): Record<string, string> {
   children.forEach((child) => {
     if (!child || !child.tagName) return;
     
-    // Remove namespace prefix if present
     const tagName = removeNamespacePrefix(child.tagName);
     if (!tagName) return;
     
     const textContent = (child.textContent || child.textContent || '').trim();
-    
-    // Handle attributes for elements like <enclosure url="...">
     const attributes = extractAttributes(child);
     
-    // Store as JSON string for complex elements with attributes
     if (Object.keys(attributes).length > 0) {
       fields[tagName] = JSON.stringify({ text: textContent, attributes });
     } else if (textContent) {

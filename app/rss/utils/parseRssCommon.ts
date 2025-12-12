@@ -30,12 +30,10 @@ interface XmlElement {
 function hasParseError(doc: XmlDocument): boolean {
   if (!doc) return false;
 
-  // Browser DOM uses querySelector
   if (doc.querySelector) {
     return doc.querySelector(XML_TAGS.PARSER_ERROR) !== null;
   }
   
-  // xmldom uses getElementsByTagName
   if (doc.getElementsByTagName) {
     const errors = doc.getElementsByTagName(XML_TAGS.PARSER_ERROR);
     return errors.length > 0;
@@ -58,11 +56,9 @@ function getElementsByTagName(
   if (!parent || !tagName) return [];
 
   if (parent.querySelectorAll) {
-    // Browser DOM
     return Array.from(parent.querySelectorAll(tagName));
   }
   if (parent.getElementsByTagName) {
-    // xmldom
     const collection = parent.getElementsByTagName(tagName);
     return Array.from(collection);
   }
@@ -83,11 +79,9 @@ function getElementByTagName(
   if (!parent || !tagName) return null;
 
   if (parent.querySelector) {
-    // Browser DOM
     return parent.querySelector(tagName);
   }
   if (parent.getElementsByTagName) {
-    // xmldom
     const collection = parent.getElementsByTagName(tagName);
     return collection.length > 0 ? (collection[0] as Element) : null;
   }
@@ -104,7 +98,6 @@ function getElementByTagName(
 export function parseRssXmlCommon(
   xmlDoc: XmlDocument
 ): { feed: RssFeed; error?: RssError } {
-  // Check for parsing errors
   if (hasParseError(xmlDoc)) {
     return {
       feed: { channelFields: {}, items: [], feedType: 'rss' },
@@ -115,7 +108,6 @@ export function parseRssXmlCommon(
     };
   }
 
-  // Try RSS 2.0 format first
   const rssChannel = getElementByTagName(xmlDoc, XML_TAGS.CHANNEL);
   if (rssChannel) {
     const channelFields = extractElementFields(rssChannel);
@@ -141,7 +133,6 @@ export function parseRssXmlCommon(
     };
   }
 
-  // Try Atom format
   const atomFeed = getElementByTagName(xmlDoc, XML_TAGS.FEED);
   if (atomFeed) {
     const channelFields = extractElementFields(atomFeed);

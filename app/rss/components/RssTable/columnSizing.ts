@@ -8,12 +8,10 @@
 export function getColumnWidthClass(fieldName: string): string {
   const lowerField = fieldName.toLowerCase();
 
-  // Title fields - medium width
   if (lowerField.includes('title') || lowerField.includes('name')) {
     return 'min-w-[200px] max-w-[300px]';
   }
 
-  // Description/content fields - wider
   if (
     lowerField.includes('description') ||
     lowerField.includes('content') ||
@@ -22,17 +20,14 @@ export function getColumnWidthClass(fieldName: string): string {
     return 'min-w-[250px] max-w-[400px]';
   }
 
-  // Date/time fields - narrow
   if (lowerField.includes('date') || lowerField.includes('time') || lowerField.includes('pubdate')) {
     return 'min-w-[150px] max-w-[200px]';
   }
 
-  // Link/URL fields - medium-wide
   if (lowerField.includes('link') || lowerField.includes('url') || lowerField.includes('guid')) {
     return 'min-w-[200px] max-w-[350px]';
   }
 
-  // Image/media fields - narrow (just for thumbnails)
   if (
     lowerField.includes('image') ||
     lowerField.includes('img') ||
@@ -42,17 +37,14 @@ export function getColumnWidthClass(fieldName: string): string {
     return 'min-w-[120px] max-w-[150px]';
   }
 
-  // Author/creator fields - medium
   if (lowerField.includes('author') || lowerField.includes('creator')) {
     return 'min-w-[150px] max-w-[200px]';
   }
 
-  // Category/tag fields - medium
   if (lowerField.includes('category') || lowerField.includes('tag')) {
     return 'min-w-[120px] max-w-[180px]';
   }
 
-  // Default - medium width
   return 'min-w-[150px] max-w-[250px]';
 }
 

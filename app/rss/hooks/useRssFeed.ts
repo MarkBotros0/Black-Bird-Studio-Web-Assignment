@@ -54,7 +54,6 @@ export function useRssFeed(): UseRssFeedReturn {
     setFeed(null);
 
     try {
-      // Use Next.js API route to fetch RSS (avoids CORS issues)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -84,7 +83,7 @@ export function useRssFeed(): UseRssFeedReturn {
           const errorResult = await response.json();
           errorData = errorResult.error;
         } catch {
-          // If JSON parsing fails, use default error
+          // JSON parsing failed, use default error
         }
 
         setError(
@@ -136,7 +135,6 @@ export function useRssFeed(): UseRssFeedReturn {
     try {
       const xmlContent = generateRssXml(feed);
       const feedTitle = feed.channelFields.title || feed.channelFields.name || 'feed';
-      // Sanitize filename: remove invalid characters and limit length
       const sanitizedTitle = feedTitle
         .replace(/[^a-z0-9]/gi, '_')
         .toLowerCase()
@@ -146,7 +144,7 @@ export function useRssFeed(): UseRssFeedReturn {
     } catch (error) {
       setError({
         message: error instanceof Error ? error.message : 'Failed to generate XML file',
-        type: 'FETCH_ERROR',
+        type: 'GENERATION_ERROR',
       });
     }
   }, [feed]);

@@ -80,19 +80,9 @@ export const styles = {
 
 /**
  * Utility function to combine class names
+ * Filters out falsy values and joins remaining classes with spaces
  */
 export function cn(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(' ');
-}
-
-/**
- * Conditional class name helper
- */
-export function conditionalClass(
-  condition: boolean,
-  trueClass: string,
-  falseClass?: string
-): string {
-  return condition ? trueClass : falseClass || '';
 }
 

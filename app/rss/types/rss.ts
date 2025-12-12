@@ -36,7 +36,8 @@ export type RssErrorType =
   | 'INVALID_URL'
   | 'FETCH_ERROR'
   | 'PARSE_ERROR'
-  | 'VALIDATION_ERROR';
+  | 'VALIDATION_ERROR'
+  | 'GENERATION_ERROR';
 
 /**
  * RSS error object
@@ -47,5 +48,16 @@ export interface RssError {
   message: string;
   /** Error type category */
   type: RssErrorType;
+}
+
+/**
+ * Parsed field value with text content and optional XML attributes
+ * @public
+ */
+export interface ParsedFieldValue {
+  /** Text content of the field */
+  text: string;
+  /** Optional XML attributes as key-value pairs */
+  attributes?: Record<string, string>;
 }
 

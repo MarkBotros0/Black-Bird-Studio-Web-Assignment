@@ -27,13 +27,6 @@ const HTTP_STATUS = {
  * @param request - Next.js request object
  * @returns JSON response with parsed RSS data or error
  */
-/**
- * Server-side API route to fetch RSS feeds (avoids CORS issues)
- * Handles RSS feed fetching, parsing, and error handling
- *
- * @param request - Next.js request object
- * @returns JSON response with parsed RSS data or error
- */
 export async function POST(request: NextRequest) {
   try {
     let body: RssApiRequest;

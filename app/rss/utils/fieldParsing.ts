@@ -3,13 +3,7 @@
  * Handles JSON-encoded fields with attributes and plain text fields
  */
 
-/**
- * Type guard for parsed field value with attributes
- */
-export interface ParsedFieldValue {
-  text: string;
-  attributes?: Record<string, string>;
-}
+import type { ParsedFieldValue } from '../types/rss';
 
 /**
  * Type guard to check if a value is a parsed field value object
@@ -40,7 +34,6 @@ export function parseFieldValue(value: string | undefined): ParsedFieldValue {
     return { text: '' };
   }
 
-  // Quick check: JSON objects start with '{'
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
     try {
       const parsed = JSON.parse(trimmed);
@@ -51,7 +44,7 @@ export function parseFieldValue(value: string | undefined): ParsedFieldValue {
         };
       }
     } catch {
-      // Not valid JSON, treat as plain text
+      // Invalid JSON, treat as plain text
     }
   }
 
@@ -80,14 +73,11 @@ export function extractLinkUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
   const parsed = parseFieldValue(value);
-  
-  // For link elements, prioritize href attribute
   const href = parsed.attributes?.href;
   if (href && typeof href === 'string' && href.trim()) {
     return href.trim();
   }
-  
-  // Fallback to text content if it looks like a URL
+
   const text = parsed.text?.trim();
   if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
     return text;
@@ -110,16 +100,14 @@ export function parseFieldValueForDisplay(
   if (!value) return '';
 
   const parsed = parseFieldValue(value);
-  
-  // For link fields, prioritize href attribute
   const isLinkField =
     fieldName?.toLowerCase().includes('link') ||
     fieldName?.toLowerCase() === 'link';
-  
+
   if (isLinkField && parsed.attributes?.href) {
     return parsed.attributes.href;
   }
-  
+
   return parsed.text;
 }
 
@@ -131,7 +119,7 @@ export function parseFieldValueForDisplay(
  */
 export function hasAttributes(value: string | undefined): boolean {
   if (!value) return false;
-  
+
   const parsed = parseFieldValue(value);
   return parsed.attributes !== undefined && Object.keys(parsed.attributes).length > 0;
 }
@@ -151,8 +139,8 @@ export function createFieldValue(
   const cleanText = String(text || '').trim();
   const cleanAttrs = attributes && Object.keys(attributes).length > 0
     ? Object.fromEntries(
-        Object.entries(attributes).map(([k, v]) => [k, String(v)])
-      )
+      Object.entries(attributes).map(([k, v]) => [k, String(v)])
+    )
     : undefined;
 
   if (cleanAttrs) {

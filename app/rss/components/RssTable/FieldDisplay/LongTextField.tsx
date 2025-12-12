@@ -23,7 +23,6 @@ export default function LongTextField({ text }: LongTextFieldProps) {
   const isHuge = text.length > EXPANDABLE_FIELD_THRESHOLD;
 
   if (!isHuge) {
-    // For smaller text, just show with line clamp
     return (
       <div
         className={`${styles.text.body} line-clamp-3 break-words`}

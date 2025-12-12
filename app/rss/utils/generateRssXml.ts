@@ -1,5 +1,5 @@
-import type { RssFeed } from '../types/rss';
-import { parseFieldValue, type ParsedFieldValue } from './fieldParsing';
+import type { RssFeed, ParsedFieldValue } from '../types/rss';
+import { parseFieldValue } from './fieldParsing';
 import { XML_NAMESPACES, XML_TAGS } from '../constants';
 
 /**
@@ -19,7 +19,6 @@ function escapeXml(unsafe: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 }
-
 
 /**
  * Generates XML element string from field key-value pair
@@ -60,17 +59,14 @@ export function generateRssXml(feed: RssFeed): string {
   const lines: string[] = ['<?xml version="1.0" encoding="UTF-8"?>'];
 
   if (feed.feedType === 'atom') {
-    // Generate Atom format
     lines.push(`<${XML_TAGS.FEED} xmlns="${XML_NAMESPACES.ATOM}">`);
 
-    // Feed-level fields
     for (const [key, value] of Object.entries(feed.channelFields)) {
       if (key === XML_TAGS.ENTRY || !value) continue; // Skip entry elements and empty values
       const parsed = parseFieldValue(value);
       lines.push(generateXmlElement(key, parsed, '  '));
     }
 
-    // Entries
     for (const item of feed.items) {
       lines.push(`  <${XML_TAGS.ENTRY}>`);
       for (const [key, value] of Object.entries(item)) {
@@ -83,18 +79,15 @@ export function generateRssXml(feed: RssFeed): string {
 
     lines.push(`</${XML_TAGS.FEED}>`);
   } else {
-    // Generate RSS 2.0 format
     lines.push(`<${XML_TAGS.RSS} version="2.0" xmlns:atom="${XML_NAMESPACES.ATOM}">`);
     lines.push(`  <${XML_TAGS.CHANNEL}>`);
 
-    // Channel metadata (preserve all fields)
     for (const [key, value] of Object.entries(feed.channelFields)) {
       if (key === XML_TAGS.ITEM || !value) continue; // Skip item elements and empty values
       const parsed = parseFieldValue(value);
       lines.push(generateXmlElement(key, parsed, '    '));
     }
 
-    // Items (preserve all fields)
     for (const item of feed.items) {
       lines.push(`    <${XML_TAGS.ITEM}>`);
       for (const [key, value] of Object.entries(item)) {
@@ -140,6 +133,5 @@ export function downloadXmlFile(xmlContent: string, filename: string = 'feed.xml
   link.click();
   document.body.removeChild(link);
 
-  // Clean up object URL after a short delay to ensure download starts
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }

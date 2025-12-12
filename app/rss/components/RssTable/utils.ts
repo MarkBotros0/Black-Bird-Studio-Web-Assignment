@@ -1,5 +1,4 @@
 import type { RssItem } from '../../types/rss';
-import { hasAttributes as checkHasAttributes } from '../../utils/fieldParsing';
 
 /**
  * Gets all unique field names from all items
@@ -26,16 +25,5 @@ export function getAllFields(items: RssItem[]): string[] {
   }
   
   return Array.from(fieldSet).sort();
-}
-
-/**
- * Checks if a field value contains JSON with attributes
- * Re-exports the utility function for convenience
- *
- * @param value - Field value to check
- * @returns True if value is JSON with attributes object
- */
-export function hasAttributes(value: string | undefined): boolean {
-  return checkHasAttributes(value);
 }
 

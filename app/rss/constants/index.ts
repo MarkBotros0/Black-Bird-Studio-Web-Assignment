@@ -56,6 +56,16 @@ export const XML_TAGS = {
   PARSER_ERROR: 'parsererror',
 } as const;
 
+/** UI styling constants */
+export const UI_CLASSES = {
+  /** Padding bottom for content when feed is loaded */
+  CONTENT_PADDING_BOTTOM: 'pb-24',
+  /** Shadow for floating buttons */
+  BUTTON_SHADOW: 'shadow-lg',
+  /** Fixed positioning classes for download button */
+  FIXED_BOTTOM_CENTER: 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50',
+} as const;
+
 /** Field name patterns for field type detection */
 export const FIELD_PATTERNS = {
   LINK: ['link'],
