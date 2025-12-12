@@ -7,6 +7,7 @@ import { extractElementFields } from './xmlExtraction';
  */
 interface XmlDocument {
   querySelector?(selector: string): Element | null;
+  querySelectorAll?(selector: string): NodeListOf<Element>;
   getElementsByTagName?(tagName: string): HTMLCollectionOf<Element> | NodeListOf<Element>;
 }
 
