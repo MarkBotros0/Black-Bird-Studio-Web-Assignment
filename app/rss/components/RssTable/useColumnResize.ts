@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { DEFAULT_COLUMN_WIDTHS, MIN_COLUMN_WIDTH } from '../../constants';
+import { getFieldTypeCategory } from '../../utils/fieldTypeDetection';
 
 /**
  * Map of field names to column widths
@@ -29,47 +30,26 @@ export interface UseColumnResizeReturn {
  * @returns Initial width in pixels
  */
 function getInitialWidth(field: string): number {
-  const lowerField = field.toLowerCase();
+  const fieldType = getFieldTypeCategory(field);
 
-  if (lowerField.includes('title') || lowerField.includes('name')) {
-    return DEFAULT_COLUMN_WIDTHS.TITLE;
+  switch (fieldType) {
+    case 'title':
+      return DEFAULT_COLUMN_WIDTHS.TITLE;
+    case 'description':
+      return DEFAULT_COLUMN_WIDTHS.DESCRIPTION;
+    case 'date':
+      return DEFAULT_COLUMN_WIDTHS.DATE;
+    case 'link':
+      return DEFAULT_COLUMN_WIDTHS.LINK;
+    case 'image':
+      return DEFAULT_COLUMN_WIDTHS.IMAGE;
+    case 'author':
+      return DEFAULT_COLUMN_WIDTHS.AUTHOR;
+    case 'category':
+      return DEFAULT_COLUMN_WIDTHS.CATEGORY;
+    default:
+      return DEFAULT_COLUMN_WIDTHS.DEFAULT;
   }
-  if (
-    lowerField.includes('description') ||
-    lowerField.includes('content') ||
-    lowerField.includes('summary')
-  ) {
-    return DEFAULT_COLUMN_WIDTHS.DESCRIPTION;
-  }
-  if (
-    lowerField.includes('date') ||
-    lowerField.includes('time') ||
-    lowerField.includes('pubdate')
-  ) {
-    return DEFAULT_COLUMN_WIDTHS.DATE;
-  }
-  if (
-    lowerField.includes('link') ||
-    lowerField.includes('url') ||
-    lowerField.includes('guid')
-  ) {
-    return DEFAULT_COLUMN_WIDTHS.LINK;
-  }
-  if (
-    lowerField.includes('image') ||
-    lowerField.includes('img') ||
-    lowerField.includes('thumbnail') ||
-    lowerField.includes('media')
-  ) {
-    return DEFAULT_COLUMN_WIDTHS.IMAGE;
-  }
-  if (lowerField.includes('author') || lowerField.includes('creator')) {
-    return DEFAULT_COLUMN_WIDTHS.AUTHOR;
-  }
-  if (lowerField.includes('category') || lowerField.includes('tag')) {
-    return DEFAULT_COLUMN_WIDTHS.CATEGORY;
-  }
-  return DEFAULT_COLUMN_WIDTHS.DEFAULT;
 }
 
 /**

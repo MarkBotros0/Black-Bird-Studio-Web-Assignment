@@ -24,7 +24,7 @@ function removeNamespacePrefix(name: string): string {
  */
 function extractAttributes(element: Element): Record<string, string> {
   const attrObj: Record<string, string> = {};
-  
+
   if (!element.attributes || element.attributes.length === 0) {
     return attrObj;
   }
@@ -37,7 +37,7 @@ function extractAttributes(element: Element): Record<string, string> {
       attrObj[attrName] = String(attr.value);
     }
   }
-  
+
   return attrObj;
 }
 
@@ -49,7 +49,7 @@ function extractAttributes(element: Element): Record<string, string> {
 export function extractElementFields(element: Element): Record<string, string> {
   const fields: Record<string, string> = {};
   let children: Element[];
-  
+
   if ('children' in element && element.children) {
     children = Array.from(element.children) as Element[];
   } else if ('childNodes' in element && element.childNodes) {
@@ -59,23 +59,23 @@ export function extractElementFields(element: Element): Record<string, string> {
   } else {
     return fields;
   }
-  
+
   children.forEach((child) => {
     if (!child || !child.tagName) return;
-    
+
     const tagName = removeNamespacePrefix(child.tagName);
     if (!tagName) return;
-    
-    const textContent = (child.textContent || child.textContent || '').trim();
+
+    const textContent = (child.textContent || '').trim();
     const attributes = extractAttributes(child);
-    
+
     if (Object.keys(attributes).length > 0) {
       fields[tagName] = JSON.stringify({ text: textContent, attributes });
     } else if (textContent) {
       fields[tagName] = textContent;
     }
   });
-  
+
   return fields;
 }
 

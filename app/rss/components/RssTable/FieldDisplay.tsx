@@ -44,7 +44,7 @@ export default function FieldDisplay({ field, value }: FieldDisplayProps) {
       fieldNameLower.includes(pattern) || fieldNameLower === pattern
     );
     const link = linkByName || (parsedValue.startsWith('http') && !imageField);
-    const extractedLinkUrl = link ? (extractLinkUrl(value) || parsedValue) : undefined;
+    const extractedLinkUrl = link ? extractLinkUrl(value) || parsedValue : undefined;
 
     return {
       displayValue: parsedValue,

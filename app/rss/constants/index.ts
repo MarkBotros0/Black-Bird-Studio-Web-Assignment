@@ -41,6 +41,9 @@ export const REQUEST_TIMEOUT_MS = 30000;
 /** Maximum filename length for downloaded XML files */
 export const MAX_FILENAME_LENGTH = 100;
 
+/** Delay in milliseconds before revoking object URL after file download */
+export const URL_REVOKE_DELAY_MS = 100;
+
 /** XML namespaces */
 export const XML_NAMESPACES = {
   ATOM: 'http://www.w3.org/2005/Atom',

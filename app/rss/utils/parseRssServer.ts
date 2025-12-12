@@ -3,6 +3,19 @@ import type { RssFeed, RssError } from '../types/rss';
 import { parseRssXmlCommon } from './parseRssCommon';
 
 /**
+ * Creates a parse error response from an exception
+ */
+function createParseErrorFromException(error: unknown): { feed: RssFeed; error: RssError } {
+  return {
+    feed: { channelFields: {}, items: [], feedType: 'rss' },
+    error: {
+      message: error instanceof Error ? error.message : 'Failed to parse RSS XML',
+      type: 'PARSE_ERROR',
+    },
+  };
+}
+
+/**
  * Server-side RSS XML parser (uses @xmldom/xmldom instead of browser DOMParser)
  * Parses RSS 2.0 or Atom feeds into structured data
  *
@@ -15,13 +28,7 @@ export function parseRssXmlServer(xmlString: string): { feed: RssFeed; error?: R
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     return parseRssXmlCommon(xmlDoc);
   } catch (error) {
-    return {
-      feed: { channelFields: {}, items: [], feedType: 'rss' },
-      error: {
-        message: error instanceof Error ? error.message : 'Failed to parse RSS XML',
-        type: 'PARSE_ERROR',
-      },
-    };
+    return createParseErrorFromException(error);
   }
 }
 

@@ -3,7 +3,8 @@
 import { useState, useCallback } from 'react';
 import { generateRssXml, downloadXmlFile } from '../utils/generateRssXml';
 import type { RssFeed, RssError, RssItem, ParsedRssData } from '../types/rss';
-import { RSS_API_ROUTE, REQUEST_TIMEOUT_MS, MAX_FILENAME_LENGTH } from '../constants';
+import { RSS_API_ROUTE, REQUEST_TIMEOUT_MS } from '../constants';
+import { generateXmlFilename } from '../utils/filenameUtils';
 
 /**
  * Return type for useRssFeed hook
@@ -134,12 +135,8 @@ export function useRssFeed(): UseRssFeedReturn {
 
     try {
       const xmlContent = generateRssXml(feed);
-      const feedTitle = feed.channelFields.title || feed.channelFields.name || 'feed';
-      const sanitizedTitle = feedTitle
-        .replace(/[^a-z0-9]/gi, '_')
-        .toLowerCase()
-        .substring(0, MAX_FILENAME_LENGTH);
-      const filename = `${sanitizedTitle || 'feed'}.xml`;
+      const feedTitle = feed.channelFields.title || feed.channelFields.name;
+      const filename = generateXmlFilename(feedTitle);
       downloadXmlFile(xmlContent, filename);
     } catch (error) {
       setError({

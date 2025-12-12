@@ -1,5 +1,10 @@
 import { parseFieldValueForDisplay } from '../../utils/fieldParsing';
 import { FIELD_PATTERNS } from '../../constants';
+import { 
+  isDateField as checkDateField, 
+  isImageField as checkImageField, 
+  isLongTextField as checkLongTextField 
+} from '../../utils/fieldTypeDetection';
 
 /**
  * Parses a field value that might be JSON (for elements with attributes)
@@ -31,12 +36,7 @@ export function isImageField(
     return false;
   }
   
-  const fieldNameLower = fieldName.toLowerCase();
-  const isImageByName = FIELD_PATTERNS.IMAGE.some((pattern) =>
-    fieldNameLower.includes(pattern)
-  );
-  
-  if (isImageByName) return true;
+  if (checkImageField(fieldName)) return true;
   
   const parsed = parseFieldValue(value);
   if (!parsed || typeof parsed !== 'string') {
@@ -84,8 +84,7 @@ export function isDateField(fieldName: string): boolean {
   if (!fieldName || typeof fieldName !== 'string') {
     return false;
   }
-  const fieldNameLower = fieldName.toLowerCase();
-  return FIELD_PATTERNS.DATE.some((pattern) => fieldNameLower.includes(pattern));
+  return checkDateField(fieldName);
 }
 
 /**
@@ -98,7 +97,6 @@ export function isLongTextField(fieldName: string): boolean {
   if (!fieldName || typeof fieldName !== 'string') {
     return false;
   }
-  const fieldNameLower = fieldName.toLowerCase();
-  return FIELD_PATTERNS.LONG_TEXT.some((pattern) => fieldNameLower.includes(pattern));
+  return checkLongTextField(fieldName);
 }
 

@@ -1,6 +1,6 @@
 import type { RssFeed, ParsedFieldValue } from '../types/rss';
 import { parseFieldValue } from './fieldParsing';
-import { XML_NAMESPACES, XML_TAGS } from '../constants';
+import { XML_NAMESPACES, XML_TAGS, URL_REVOKE_DELAY_MS } from '../constants';
 
 /**
  * Escapes XML special characters to prevent injection attacks
@@ -133,5 +133,5 @@ export function downloadXmlFile(xmlContent: string, filename: string = 'feed.xml
   link.click();
   document.body.removeChild(link);
 
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  setTimeout(() => URL.revokeObjectURL(url), URL_REVOKE_DELAY_MS);
 }

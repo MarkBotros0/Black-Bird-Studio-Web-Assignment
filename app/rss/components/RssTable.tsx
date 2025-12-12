@@ -34,7 +34,6 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
     if (editingIndex === null) {
       setEditedItems([...items]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, editingIndex]);
 
   const allFields = useMemo(() => getAllFields(items), [items]);

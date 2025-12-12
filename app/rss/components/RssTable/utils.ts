@@ -8,7 +8,7 @@ import type { RssItem } from '../../types/rss';
  * @returns Sorted array of unique field names
  */
 export function getAllFields(items: RssItem[]): string[] {
-  if (!items || items.length === 0) {
+  if (!items?.length) {
     return [];
   }
 
@@ -17,8 +17,8 @@ export function getAllFields(items: RssItem[]): string[] {
   for (const item of items) {
     if (!item) continue;
     
-    for (const key of Object.keys(item)) {
-      if (item[key] && typeof item[key] === 'string' && item[key].trim()) {
+    for (const [key, value] of Object.entries(item)) {
+      if (value?.trim()) {
         fieldSet.add(key);
       }
     }

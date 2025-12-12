@@ -1,3 +1,5 @@
+import { getFieldTypeCategory } from '../../utils/fieldTypeDetection';
+
 /**
  * Determines optimal column width class based on field name and type
  * Returns Tailwind CSS classes for min/max width constraints
@@ -6,46 +8,26 @@
  * @returns Tailwind CSS classes string with min-width and max-width constraints
  */
 export function getColumnWidthClass(fieldName: string): string {
-  const lowerField = fieldName.toLowerCase();
-
-  if (lowerField.includes('title') || lowerField.includes('name')) {
-    return 'min-w-[200px] max-w-[300px]';
+  const fieldType = getFieldTypeCategory(fieldName);
+  
+  switch (fieldType) {
+    case 'title':
+      return 'min-w-[200px] max-w-[300px]';
+    case 'description':
+      return 'min-w-[250px] max-w-[400px]';
+    case 'date':
+      return 'min-w-[150px] max-w-[200px]';
+    case 'link':
+      return 'min-w-[200px] max-w-[350px]';
+    case 'image':
+      return 'min-w-[120px] max-w-[150px]';
+    case 'author':
+      return 'min-w-[150px] max-w-[200px]';
+    case 'category':
+      return 'min-w-[120px] max-w-[180px]';
+    default:
+      return 'min-w-[150px] max-w-[250px]';
   }
-
-  if (
-    lowerField.includes('description') ||
-    lowerField.includes('content') ||
-    lowerField.includes('summary')
-  ) {
-    return 'min-w-[250px] max-w-[400px]';
-  }
-
-  if (lowerField.includes('date') || lowerField.includes('time') || lowerField.includes('pubdate')) {
-    return 'min-w-[150px] max-w-[200px]';
-  }
-
-  if (lowerField.includes('link') || lowerField.includes('url') || lowerField.includes('guid')) {
-    return 'min-w-[200px] max-w-[350px]';
-  }
-
-  if (
-    lowerField.includes('image') ||
-    lowerField.includes('img') ||
-    lowerField.includes('thumbnail') ||
-    lowerField.includes('media')
-  ) {
-    return 'min-w-[120px] max-w-[150px]';
-  }
-
-  if (lowerField.includes('author') || lowerField.includes('creator')) {
-    return 'min-w-[150px] max-w-[200px]';
-  }
-
-  if (lowerField.includes('category') || lowerField.includes('tag')) {
-    return 'min-w-[120px] max-w-[180px]';
-  }
-
-  return 'min-w-[150px] max-w-[250px]';
 }
 
 /**

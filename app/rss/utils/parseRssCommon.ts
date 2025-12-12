@@ -89,6 +89,101 @@ function getElementByTagName(
 }
 
 /**
+ * Creates a default empty feed structure
+ */
+function createEmptyFeed(feedType: 'rss' | 'atom' = 'rss'): RssFeed {
+  return { channelFields: {}, items: [], feedType };
+}
+
+/**
+ * Creates an error result for parse errors
+ */
+function createParseError(message: string): { feed: RssFeed; error: RssError } {
+  return {
+    feed: createEmptyFeed(),
+    error: {
+      message,
+      type: 'PARSE_ERROR',
+    },
+  };
+}
+
+/**
+ * Creates an error result for validation errors
+ */
+function createValidationError(
+  message: string,
+  feedType: 'rss' | 'atom' = 'rss',
+  channelFields: Record<string, string> = {}
+): { feed: RssFeed; error: RssError } {
+  return {
+    feed: { channelFields, items: [], feedType },
+    error: {
+      message,
+      type: 'VALIDATION_ERROR',
+    },
+  };
+}
+
+/**
+ * Parses RSS 2.0 feed format
+ *
+ * @param xmlDoc - Parsed XML document
+ * @returns Parsed RSS feed data or error
+ */
+function parseRssFeed(xmlDoc: XmlDocument): { feed: RssFeed; error?: RssError } | null {
+  const rssChannel = getElementByTagName(xmlDoc, XML_TAGS.CHANNEL);
+  if (!rssChannel) {
+    return null;
+  }
+
+  const channelFields = extractElementFields(rssChannel);
+  const itemElements = getElementsByTagName(rssChannel, XML_TAGS.ITEM);
+  const items: RssItem[] = itemElements.map((item) => extractElementFields(item));
+
+  if (items.length === 0) {
+    return createValidationError('RSS feed contains no items.', 'rss', channelFields);
+  }
+
+  return {
+    feed: {
+      channelFields,
+      items,
+      feedType: 'rss',
+    },
+  };
+}
+
+/**
+ * Parses Atom feed format
+ *
+ * @param xmlDoc - Parsed XML document
+ * @returns Parsed Atom feed data or error
+ */
+function parseAtomFeed(xmlDoc: XmlDocument): { feed: RssFeed; error?: RssError } | null {
+  const atomFeed = getElementByTagName(xmlDoc, XML_TAGS.FEED);
+  if (!atomFeed) {
+    return null;
+  }
+
+  const channelFields = extractElementFields(atomFeed);
+  const entryElements = getElementsByTagName(atomFeed, XML_TAGS.ENTRY);
+  const items: RssItem[] = entryElements.map((entry) => extractElementFields(entry));
+
+  if (items.length === 0) {
+    return createValidationError('Atom feed contains no entries.', 'atom', channelFields);
+  }
+
+  return {
+    feed: {
+      channelFields,
+      items,
+      feedType: 'atom',
+    },
+  };
+}
+
+/**
  * Common RSS parsing logic (extracted to reduce duplication)
  * Works with both browser DOM and xmldom
  *
@@ -99,71 +194,24 @@ export function parseRssXmlCommon(
   xmlDoc: XmlDocument
 ): { feed: RssFeed; error?: RssError } {
   if (hasParseError(xmlDoc)) {
-    return {
-      feed: { channelFields: {}, items: [], feedType: 'rss' },
-      error: {
-        message: 'Invalid XML format. Please check the RSS feed structure.',
-        type: 'PARSE_ERROR',
-      },
-    };
+    return createParseError('Invalid XML format. Please check the RSS feed structure.');
   }
 
-  const rssChannel = getElementByTagName(xmlDoc, XML_TAGS.CHANNEL);
-  if (rssChannel) {
-    const channelFields = extractElementFields(rssChannel);
-    const itemElements = getElementsByTagName(rssChannel, XML_TAGS.ITEM);
-    const items: RssItem[] = itemElements.map((item) => extractElementFields(item));
-
-    if (items.length === 0) {
-      return {
-        feed: { channelFields, items: [], feedType: 'rss' },
-        error: {
-          message: 'RSS feed contains no items.',
-          type: 'VALIDATION_ERROR',
-        },
-      };
-    }
-
-    return {
-      feed: {
-        channelFields,
-        items,
-        feedType: 'rss',
-      },
-    };
+  // Try parsing as RSS 2.0 first
+  const rssResult = parseRssFeed(xmlDoc);
+  if (rssResult) {
+    return rssResult;
   }
 
-  const atomFeed = getElementByTagName(xmlDoc, XML_TAGS.FEED);
-  if (atomFeed) {
-    const channelFields = extractElementFields(atomFeed);
-    const entryElements = getElementsByTagName(atomFeed, XML_TAGS.ENTRY);
-    const items: RssItem[] = entryElements.map((entry) => extractElementFields(entry));
-
-    if (items.length === 0) {
-      return {
-        feed: { channelFields, items: [], feedType: 'atom' },
-        error: {
-          message: 'Atom feed contains no entries.',
-          type: 'VALIDATION_ERROR',
-        },
-      };
-    }
-
-    return {
-      feed: {
-        channelFields,
-        items,
-        feedType: 'atom',
-      },
-    };
+  // Try parsing as Atom
+  const atomResult = parseAtomFeed(xmlDoc);
+  if (atomResult) {
+    return atomResult;
   }
 
-  return {
-    feed: { channelFields: {}, items: [], feedType: 'rss' },
-    error: {
-      message: 'Feed format not recognized. Expected RSS 2.0 or Atom format.',
-      type: 'VALIDATION_ERROR',
-    },
-  };
+  // Neither format recognized
+  return createValidationError(
+    'Feed format not recognized. Expected RSS 2.0 or Atom format.'
+  );
 }
 
