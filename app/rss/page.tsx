@@ -2,6 +2,7 @@
 
 import RssTable from './components/RssTable';
 import RssUrlInput from './components/RssUrlInput';
+import ExampleFeeds from './components/ExampleFeeds';
 import ErrorDisplay from './components/ErrorDisplay';
 import FeedInfo from './components/FeedInfo';
 import EmptyState from './components/EmptyState';
@@ -27,6 +28,7 @@ export default function RssPage() {
     loading,
     error,
     handleFetch,
+    handleFetchUrl,
     handleItemsChange,
     handleGenerateXml,
   } = useRssFeed();
@@ -42,6 +44,8 @@ export default function RssPage() {
           onUrlChange={setUrl}
           onFetch={handleFetch}
         />
+
+        <ExampleFeeds loading={loading} onFeedSelect={handleFetchUrl} />
 
         {error && <ErrorDisplay error={error} />}
 

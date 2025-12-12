@@ -22,6 +22,8 @@ export interface UseRssFeedReturn {
   error: RssError | null;
   /** Handler to fetch RSS feed */
   handleFetch: () => Promise<void>;
+  /** Handler to fetch RSS feed from a specific URL */
+  handleFetchUrl: (feedUrl: string) => Promise<void>;
   /** Handler to update RSS items */
   handleItemsChange: (items: RssItem[]) => void;
   /** Handler to generate and download XML */
@@ -39,9 +41,12 @@ export function useRssFeed(): UseRssFeedReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RssError | null>(null);
 
-  const handleFetch = useCallback(async () => {
-    const trimmedUrl = url.trim();
-    
+  /**
+   * Internal function to fetch RSS feed from a URL
+   */
+  const fetchFeed = useCallback(async (feedUrl: string) => {
+    const trimmedUrl = feedUrl.trim();
+
     if (!trimmedUrl) {
       setError({
         message: 'Please enter an RSS feed URL.',
@@ -53,6 +58,7 @@ export function useRssFeed(): UseRssFeedReturn {
     setLoading(true);
     setError(null);
     setFeed(null);
+    setUrl(trimmedUrl);
 
     try {
       const controller = new AbortController();
@@ -117,7 +123,15 @@ export function useRssFeed(): UseRssFeedReturn {
     } finally {
       setLoading(false);
     }
-  }, [url]);
+  }, []);
+
+  const handleFetch = useCallback(async () => {
+    await fetchFeed(url);
+  }, [url, fetchFeed]);
+
+  const handleFetchUrl = useCallback(async (feedUrl: string) => {
+    await fetchFeed(feedUrl);
+  }, [fetchFeed]);
 
   const handleItemsChange = useCallback((items: RssItem[]) => {
     setFeed((currentFeed) => {
@@ -153,6 +167,7 @@ export function useRssFeed(): UseRssFeedReturn {
     loading,
     error,
     handleFetch,
+    handleFetchUrl,
     handleItemsChange,
     handleGenerateXml,
   };
