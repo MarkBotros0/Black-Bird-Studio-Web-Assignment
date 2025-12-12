@@ -18,8 +18,6 @@ interface RssTableRowProps {
   editedItem: RssItem;
   /** Array of field names to display */
   fields: string[];
-  /** Row index */
-  index: number;
   /** Whether the row is in edit mode */
   isEditing: boolean;
   /** Handler for field value changes */
@@ -45,7 +43,6 @@ function RssTableRow({
   item,
   editedItem,
   fields,
-  index,
   isEditing,
   onFieldChange,
   onEdit,

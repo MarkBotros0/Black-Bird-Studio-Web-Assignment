@@ -5,7 +5,6 @@ import Card from './ui/Card';
 import FeedMetadata from './FeedInfo/FeedMetadata';
 import FeedStats from './FeedInfo/FeedStats';
 import { extractLinkUrl, extractTextContent } from '../utils/fieldParsing';
-import { styles } from '../styles';
 
 /**
  * Props for FeedInfo component

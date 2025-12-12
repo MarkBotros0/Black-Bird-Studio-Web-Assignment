@@ -47,6 +47,12 @@ export const URL_REVOKE_DELAY_MS = 100;
 /** Debounce delay in milliseconds for URL input validation */
 export const URL_INPUT_DEBOUNCE_MS = 500;
 
+/** Maximum number of retry attempts for failed fetch requests */
+export const MAX_RETRY_ATTEMPTS = 3;
+
+/** Base delay in milliseconds before retrying a failed request */
+export const RETRY_BASE_DELAY_MS = 1000;
+
 /** XML namespaces */
 export const XML_NAMESPACES = {
   ATOM: 'http://www.w3.org/2005/Atom',

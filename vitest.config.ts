@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'happy-dom', // Use happy-dom for React component and hook testing
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -19,6 +19,7 @@ export default defineConfig({
     },
     include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'dist'],
+    setupFiles: ['./vitest.setup.ts'],
   },
   resolve: {
     alias: {

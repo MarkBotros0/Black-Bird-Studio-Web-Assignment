@@ -10,6 +10,7 @@ A powerful, modern web application for fetching, parsing, editing, and exporting
   - Fetch RSS 2.0 and Atom feeds from any URL
   - Server-side API route to avoid CORS issues
   - Automatic format detection (RSS 2.0 or Atom)
+  - Automatic retry with exponential backoff (up to 3 attempts)
   - Comprehensive error handling with user-friendly messages
   - URL validation before fetching
 
@@ -46,11 +47,12 @@ A powerful, modern web application for fetching, parsing, editing, and exporting
   - Smooth resizing experience
 
 - **Specialized Field Display**
-  - **Image Fields**: Displays images with proper sizing
+  - **Image Fields**: Displays images with proper sizing using Next.js Image component for optimization
   - **Date Fields**: Formatted date display
   - **Link Fields**: Clickable links that open in new tabs
   - **Long Text Fields**: Truncated preview with expandable view
   - **Default Fields**: Standard text display
+  - All field display components are memoized for optimal performance
 
 - **Specialized Field Editors**
   - **Image Field Editor**: URL input for image fields
@@ -89,8 +91,10 @@ A powerful, modern web application for fetching, parsing, editing, and exporting
 
 - **Performance**
   - Client-side state management
-  - Efficient re-rendering with React hooks
-  - Optimized column resizing
+  - Efficient re-rendering with React hooks and memoization
+  - React.memo for optimized component rendering
+  - Debounced URL input to reduce unnecessary updates
+  - Optimized column resizing with reducer pattern
   - Fast XML parsing and generation
 
 ## 🛠️ Technical Capabilities
@@ -117,19 +121,22 @@ The application automatically detects field types based on:
 
 ### Error Handling
 
+- **Centralized Error Utilities**: Consistent error creation across the codebase
 - **Validation Errors**: Invalid URLs, empty feeds
 - **Fetch Errors**: Network issues, HTTP errors
 - **Parse Errors**: Invalid XML structure
-- User-friendly error messages with error types
+- **Generation Errors**: XML generation failures
+- User-friendly error messages with typed error objects
 
 ## 📦 Technology Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **UI Library**: React 19
-- **Language**: TypeScript
+- **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS 4
 - **XML Parsing**: @xmldom/xmldom
 - **Build Tool**: Next.js built-in bundler
+- **Code Quality**: ESLint with Next.js and TypeScript rules
 
 ## 🚦 Getting Started
 
@@ -180,9 +187,10 @@ npm start
 ## 📖 Usage
 
 1. **Fetch a Feed**
-   - Enter an RSS or Atom feed URL in the input field
+   - Enter an RSS or Atom feed URL in the input field (with debounced input)
    - Click "Fetch RSS" or press Enter
    - Wait for the feed to load
+   - Use example feeds for quick testing
 
 2. **View Feed Information**
    - Review feed metadata (title, description, link)
@@ -212,11 +220,16 @@ npm start
 ✅ Display images, links, dates, and long text appropriately  
 ✅ Generate valid RSS/Atom XML from edited data  
 ✅ Download XML files  
-✅ Handle errors gracefully  
+✅ Handle errors gracefully with centralized error utilities  
 ✅ Responsive and accessible UI  
 ✅ Server-side fetching to avoid CORS issues  
 ✅ Preserve XML attributes and structure  
 ✅ Support custom RSS fields  
+✅ Automatic retry mechanism for failed requests (3 attempts with exponential backoff)  
+✅ Performance optimizations (React.memo, debouncing)  
+✅ Clean, maintainable code with granular functions  
+✅ Consistent error handling patterns  
+✅ Optimized image rendering with Next.js Image component  
 
 ## 📝 Project Structure
 
@@ -241,9 +254,19 @@ app/
 npm run lint
 ```
 
+The codebase follows ESLint best practices with Next.js and TypeScript rules. All critical linting issues have been resolved.
+
 ### Type Checking
 
-TypeScript type checking is built into the Next.js build process.
+TypeScript strict mode is enabled and type checking is built into the Next.js build process.
+
+### Code Quality
+
+- **Clean Code**: Functions are granular and focused on single responsibilities
+- **Performance**: Optimized with React.memo, debouncing, and efficient state management
+- **Error Handling**: Centralized error utilities ensure consistent error patterns
+- **Type Safety**: Strong TypeScript usage throughout with minimal use of `any`
+- **Documentation**: Comprehensive JSDoc comments for all functions and components
 
 ## 📄 License
 

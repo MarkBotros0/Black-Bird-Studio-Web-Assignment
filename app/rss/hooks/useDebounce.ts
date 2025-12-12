@@ -53,11 +53,12 @@ export function useDebounce<T>(value: T, delay: number): T {
  * }, 500);
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function constraint requires any for maximum flexibility
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     return () => {

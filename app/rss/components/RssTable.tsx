@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { RssItem } from '../types/rss';
 import RssTableRow from './RssTable/RssTableRow';
 import RssTableHeader from './RssTable/RssTableHeader';
@@ -28,13 +28,16 @@ interface RssTableProps {
  */
 export default function RssTable({ items, onItemsChange }: RssTableProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editedItems, setEditedItems] = useState<RssItem[]>(items);
+  const [editedItemsSnapshot, setEditedItemsSnapshot] = useState<RssItem[]>([]);
 
-  useEffect(() => {
+  // Derive editedItems: use snapshot when editing, otherwise use items directly
+  // This avoids setState in effects by deriving state instead of syncing it
+  const editedItems = useMemo(() => {
     if (editingIndex === null) {
-      setEditedItems([...items]);
+      return items;
     }
-  }, [items, editingIndex]);
+    return editedItemsSnapshot;
+  }, [items, editingIndex, editedItemsSnapshot]);
 
   const allFields = useMemo(() => getAllFields(items), [items]);
   const { isResizing, handleMouseDown, getColumnWidth } = useColumnResize(allFields);
@@ -44,24 +47,23 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
    */
   const handleEdit = useCallback((index: number) => {
     setEditingIndex(index);
-    setEditedItems([...items]);
+    setEditedItemsSnapshot([...items]);
   }, [items]);
 
   /**
    * Handles saving edited row
    */
-  const handleSave = useCallback((index: number) => {
-    onItemsChange(editedItems);
+  const handleSave = useCallback(() => {
+    onItemsChange(editedItemsSnapshot);
     setEditingIndex(null);
-  }, [editedItems, onItemsChange]);
+  }, [editedItemsSnapshot, onItemsChange]);
 
   /**
    * Handles canceling edit mode
    */
   const handleCancel = useCallback(() => {
-    setEditedItems([...items]);
     setEditingIndex(null);
-  }, [items]);
+  }, []);
 
   /**
    * Handles field value changes during editing
@@ -69,7 +71,7 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
    */
   const handleFieldChange = useCallback(
     (index: number, field: string, value: string) => {
-      setEditedItems((prev) => {
+      setEditedItemsSnapshot((prev) => {
         if (index < 0 || index >= prev.length) {
           return prev;
         }
@@ -138,13 +140,12 @@ export default function RssTable({ items, onItemsChange }: RssTableProps) {
                 item={item}
                 editedItem={editedItem}
                 fields={allFields}
-                index={index}
                 isEditing={isEditing}
                 onFieldChange={(field: string, value: string) =>
                   handleFieldChange(index, field, value)
                 }
                 onEdit={() => handleEdit(index)}
-                onSave={() => handleSave(index)}
+                onSave={handleSave}
                 onCancel={handleCancel}
                 getColumnWidth={getColumnWidth}
               />

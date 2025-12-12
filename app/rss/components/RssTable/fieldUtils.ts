@@ -1,5 +1,4 @@
 import { parseFieldValueForDisplay } from '../../utils/fieldParsing';
-import { FIELD_PATTERNS } from '../../constants';
 import { 
   isDateField as checkDateField, 
   isImageField as checkImageField, 

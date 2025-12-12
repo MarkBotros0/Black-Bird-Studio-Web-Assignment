@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { generateRssXml, downloadXmlFile } from '../utils/generateRssXml';
 import type { RssFeed, RssError, RssItem, ParsedRssData } from '../types/rss';
-import { RSS_API_ROUTE, REQUEST_TIMEOUT_MS } from '../constants';
+import { RSS_API_ROUTE, REQUEST_TIMEOUT_MS, MAX_RETRY_ATTEMPTS, RETRY_BASE_DELAY_MS } from '../constants';
 import { generateXmlFilename } from '../utils/filenameUtils';
 import {
   createValidationError,
@@ -11,6 +11,7 @@ import {
   createGenerationError,
   createNetworkError,
 } from '../utils/errorUtils';
+import { retryWithBackoff, isRetryableError } from '../utils/retry';
 
 /**
  * Return type for useRssFeed hook
@@ -159,7 +160,34 @@ export function useRssFeed(): UseRssFeedReturn {
   }, []);
 
   /**
-   * Internal function to fetch RSS feed from a URL
+   * Performs a single fetch attempt with error extraction
+   *
+   * @param url - URL to fetch
+   * @returns Parsed response data or throws error
+   */
+  const performFetchAttempt = useCallback(async (url: string): Promise<ParsedRssData> => {
+    const response = await performFetch(url);
+
+    if (!response.ok) {
+      const errorData = await extractResponseError(response);
+      throw errorData;
+    }
+
+    const result: { data?: ParsedRssData; error?: RssError } = await response.json();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (!result.data) {
+      throw createFetchError('Invalid response from server.');
+    }
+
+    return result.data;
+  }, [performFetch, extractResponseError]);
+
+  /**
+   * Internal function to fetch RSS feed from a URL with retry logic
    */
   const fetchFeed = useCallback(async (feedUrl: string) => {
     const trimmedUrl = validateFeedUrl(feedUrl);
@@ -173,27 +201,41 @@ export function useRssFeed(): UseRssFeedReturn {
     setUrl(trimmedUrl);
 
     try {
-      const response = await performFetch(trimmedUrl);
+      // Retry fetch operation up to MAX_RETRY_ATTEMPTS times
+      const data = await retryWithBackoff(
+        () => performFetchAttempt(trimmedUrl),
+        {
+          maxAttempts: MAX_RETRY_ATTEMPTS,
+          baseDelayMs: RETRY_BASE_DELAY_MS,
+          exponentialBackoff: true,
+          shouldRetry: (error) => isRetryableError(error),
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await extractResponseError(response);
-        setError(errorData);
-        return;
-      }
-
-      const result: { data?: ParsedRssData; error?: RssError } = await response.json();
-      handleSuccessfulResponse(result);
+      // Success - set feed data
+      setFeed(data.feed);
+      setError(null);
     } catch (err) {
-      // Check if error is already an RssError (from timeout handler)
+      // All retries exhausted or non-retryable error
+      let finalError: RssError;
+
       if (err && typeof err === 'object' && 'type' in err && 'message' in err) {
-        setError(err as RssError);
+        finalError = err as RssError;
+        // Update error message to indicate retries were attempted
+        if (isRetryableError(err)) {
+          finalError = createFetchError(
+            `${finalError.message} (Attempted ${MAX_RETRY_ATTEMPTS} times)`
+          );
+        }
       } else {
-        setError(createNetworkError(err, 'An unexpected error occurred'));
+        finalError = createNetworkError(err, 'An unexpected error occurred');
       }
+
+      setError(finalError);
     } finally {
       setLoading(false);
     }
-  }, [validateFeedUrl, performFetch, extractResponseError, handleSuccessfulResponse]);
+  }, [validateFeedUrl, performFetchAttempt]);
 
   const handleFetch = useCallback(async () => {
     await fetchFeed(url);

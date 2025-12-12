@@ -21,6 +21,7 @@
  * debouncedSearch('test query'); // Previous call cancelled
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function constraint requires any for maximum flexibility
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -59,6 +60,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * cancel(); // Cancels pending invocation
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function constraint requires any for maximum flexibility
 export function debounceWithCancel<T extends (...args: any[]) => any>(
   func: T,
   wait: number

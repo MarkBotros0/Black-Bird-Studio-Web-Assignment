@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, useReducer } from 'react';
 import { DEFAULT_COLUMN_WIDTHS, MIN_COLUMN_WIDTH } from '../../constants';
 import { getFieldTypeCategory } from '../../utils/fieldTypeDetection';
 
@@ -53,21 +53,62 @@ function getInitialWidth(field: string): number {
 }
 
 /**
+ * Action type for column widths reducer
+ */
+type ColumnWidthsAction =
+  | { type: 'ADD_FIELDS'; fields: string[]; initialWidths: ColumnWidths }
+  | { type: 'SET_WIDTH'; field: string; width: number };
+
+/**
+ * Reducer for managing column widths state
+ */
+function columnWidthsReducer(
+  state: ColumnWidths,
+  action: ColumnWidthsAction
+): ColumnWidths {
+  switch (action.type) {
+    case 'ADD_FIELDS': {
+      const updated = { ...state };
+      let hasChanges = false;
+      for (const field of action.fields) {
+        if (!field || updated[field]) continue;
+        updated[field] = action.initialWidths[field];
+        hasChanges = true;
+      }
+      return hasChanges ? updated : state;
+    }
+    case 'SET_WIDTH': {
+      if (state[action.field] === action.width) return state;
+      return { ...state, [action.field]: action.width };
+    }
+    default:
+      return state;
+  }
+}
+
+/**
  * Hook for managing draggable column resizing
  *
  * @param fields - Array of field names to create columns for
  * @returns Object containing resize state and handlers
  */
 export function useColumnResize(fields: string[]): UseColumnResizeReturn {
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() => {
+  // Compute initial widths using useMemo
+  const initialWidths = useMemo<ColumnWidths>(() => {
     const initial: ColumnWidths = {};
-    fields.forEach((field) => {
-      initial[field] = getInitialWidth(field);
-    });
+    if (fields && fields.length > 0) {
+      fields.forEach((field) => {
+        if (field) {
+          initial[field] = getInitialWidth(field);
+        }
+      });
+    }
     return initial;
-  });
+  }, [fields]);
 
+  const [columnWidths, dispatch] = useReducer(columnWidthsReducer, initialWidths);
   const columnWidthsRef = useRef<ColumnWidths>(columnWidths);
+  const processedFieldsRef = useRef<Set<string>>(new Set());
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const startXRef = useRef<number>(0);
   const startWidthRef = useRef<number>(0);
@@ -76,22 +117,16 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
     columnWidthsRef.current = columnWidths;
   }, [columnWidths]);
 
+  // Add new fields using reducer in effect
   useEffect(() => {
     if (!fields || fields.length === 0) return;
 
-    setColumnWidths((prev) => {
-      let hasChanges = false;
-      const updated = { ...prev };
+    const newFields = fields.filter((field) => field && !processedFieldsRef.current.has(field));
+    if (newFields.length === 0) return;
 
-      for (const field of fields) {
-        if (!field || updated[field]) continue;
-        updated[field] = getInitialWidth(field);
-        hasChanges = true;
-      }
-
-      return hasChanges ? updated : prev;
-    });
-  }, [fields]);
+    newFields.forEach((field) => processedFieldsRef.current.add(field));
+    dispatch({ type: 'ADD_FIELDS', fields: newFields, initialWidths });
+  }, [fields, initialWidths]);
 
   /**
    * Creates a mouse move handler for column resizing
@@ -105,15 +140,7 @@ export function useColumnResize(fields: string[]): UseColumnResizeReturn {
         const diff = moveEvent.clientX - startXRef.current;
         const newWidth = Math.max(MIN_COLUMN_WIDTH, startWidthRef.current + diff);
 
-        setColumnWidths((prev) => {
-          if (prev[field] === newWidth) {
-            return prev;
-          }
-          return {
-            ...prev,
-            [field]: newWidth,
-          };
-        });
+        dispatch({ type: 'SET_WIDTH', field, width: newWidth });
       };
     },
     []
